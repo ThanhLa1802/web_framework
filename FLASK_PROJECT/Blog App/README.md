@@ -9,6 +9,7 @@ This project allow user register account and write blog. Use Flask framework, HT
 - pip install flask_login
 - pip install flask-bcrypt
 - pip install SQLAlchemy
+- pip install Flask-Dance
 
 ### Main function:
 Day 1:
@@ -26,7 +27,7 @@ Day 2:
 Day 3:
 - Create account profile, insert image profile
 - Create, update, delete Post in Blog
-- Github authencation
+- Github authencation use Flask-Dance
 
 (Continue update...)
 
