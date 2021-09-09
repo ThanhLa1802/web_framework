@@ -23,6 +23,11 @@ Day 2:
 - Authentiation in Flask: flask-bcrypt hash password and store in Database
 - Login page use created account 
 
+Day 3:
+- Create account profile, insert image profile
+- Create, update, delete Post in Blog
+- Github authencation
+
 (Continue update...)
 
 ![image](https://user-images.githubusercontent.com/46947782/132485075-e70ede54-fa5a-48b2-b2b3-f94a952ece4a.png)
