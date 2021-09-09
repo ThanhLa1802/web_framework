@@ -31,8 +31,15 @@ Day 3:
 
 (Continue update...)
 
-Home page: 
+## Home page: 
 ![image](https://user-images.githubusercontent.com/46947782/132669303-864746ae-7269-4cc6-8e91-15b94f8cb221.png)
+
+## Register Page: 
+![image](https://user-images.githubusercontent.com/46947782/132669623-e7debca7-f4bc-465c-bb52-a676d6252b8a.png)
+
+## Login Page: 
+![image](https://user-images.githubusercontent.com/46947782/132669700-4fdd8f2f-f6b3-45ef-9ff2-4b49c59d995d.png)
+
 
 
 
