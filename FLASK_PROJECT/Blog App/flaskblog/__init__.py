@@ -16,8 +16,8 @@ login_manager.login_view = 'login'
 login_manager.login_message_category ='info'
 
 blueprint = make_github_blueprint(
-    client_id="9cc07b32d6aacf29d4b4",
-    client_secret="d7b4f3655831ff69f13d0684e6c0eea7a724a359",
+    client_id="your client id",
+    client_secret="your client secret",
 )
 app.register_blueprint(blueprint, url_prefix="/login")
 from flaskblog import routes
