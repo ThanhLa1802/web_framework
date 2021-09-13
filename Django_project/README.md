@@ -1,6 +1,6 @@
 # Project name: Blog for Everyone
 ## Description:
-This project allow user register account and write blog. Use Django framework, HTML, CSS, flask_form, SQLAlchemy
+This project allow user register account and write blog. Use Django framework, HTML, CSS, Django ORM
 
 ### Requirments:
 - pip install django
