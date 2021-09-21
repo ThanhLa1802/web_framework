@@ -11,7 +11,7 @@ book = Blueprint('book', __name__)
 def get_all_books():
     return get_all_books_serv()
 
-#add new student
+#add new book
 @book.route('/book-management/book', methods = ['POST'])
 def add_book():
     return add_book_serv()

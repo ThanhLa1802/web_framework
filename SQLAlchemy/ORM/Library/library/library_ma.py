@@ -14,3 +14,4 @@ class BorrowSchema(ma.Schema):
 class BookSchema(ma.Schema):
     class Meta:
         fields = ('id','name', 'page_count', 'author_id', 'category_id')
+

@@ -32,19 +32,18 @@ class Category(db.Model):
     name = db.Column(db.String(100), unique = True, nullable = False)
     def __init__(self, name) :
         self.name = name
-
 class Author(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     name = db.Column(db.String(100), unique = True, nullable = False)
     def __init__(self, name):
         self.name = name
-
 class Borrows(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'))
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
     borrow_date = db.Column(db.Date, nullable = False)
     return_date = db.Column(db.Date, nullable = False)
+    
     def __init__(self, book_id, student_id, borrow_date, return_date):
         self.book_id = book_id
         self.student_id = student_id
