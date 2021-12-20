@@ -3,6 +3,13 @@
 
 {% block content %}
 <h2>This is Login Page</h2>
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for m in messages %}
+            <P>{{m}}</P>
+        {% endfor %} 
+    {% endif %} 
+{% endwith %}
 <div style="margin-left: 50px;">
     <form action="#" method="post">
         <label for="">Name</label>

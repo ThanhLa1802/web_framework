@@ -20,11 +20,9 @@ def login():
         session.permanent = True
         if user_name:
             session["user"] = user_name
-            flash("You logged in successfully!", "info")
             return render_template("user.html", user=user_name)
     if "user" in session:
         name = session["user"]
-        flash("You have already logged in!", "info")
         return render_template("user.html", user=name)
     return render_template("login.html")
 
@@ -35,14 +33,12 @@ def hello_user():
         name = session["user"]
         return render_template("user.html", user=name)
     else:
-        flash("You haven't logged in!", "info")
         return redirect(url_for("login"))
 
 
 @app.route("/logout")
 def log_out():
     flash("You logged out!", "info")
-    session.pop("user", None)
     return redirect(url_for("login"))
 
 
