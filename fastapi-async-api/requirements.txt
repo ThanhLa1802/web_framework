@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+pillow
+aiofiles
+aioboto3
+python-multipart
