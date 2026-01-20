@@ -1,0 +1,392 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Demo Large Query</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        /* --- STYLING CHUNG --- */
+        button {
+            padding: 8px 15px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-right: 10px;
+            /* Thêm khoảng cách giữa các nút */
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #eee;
+        }
+
+        /* --- KHỐI CHỨC NĂNG CHÍNH --- */
+        .action-buttons {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 15px;
+        }
+
+        .action-buttons button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .action-buttons button:hover {
+            background-color: #0056b3;
+        }
+
+        /* --- KHỐI PHÂN TRANG CUỐI TRANG --- */
+        .footer-controls {
+            display: flex;
+            justify-content: space-between;
+            /* Đẩy các nút sang hai bên */
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .pagination-status {
+            font-size: 1em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .pagination-controls button {
+            border-radius: 4px;
+            margin-right: 5px;
+            background-color: #e9ecef;
+        }
+
+        /* --- Dữ liệu Output --- */
+        .output-container {
+            border: 1px solid #ddd;
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        pre {
+            max-height: 500px;
+            overflow: auto;
+            background: #fff;
+            padding: 10px;
+            margin: 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Demo Query 1 Million Records</h1>
+    
+    <div class="action-buttons">
+        <button onclick="fetchDirect()">Direct Query</button>
+        <button onclick="fetchPagination(1)">Pagination</button>
+        <button onclick="processAndDownloadStream()">Streaming</button>
+    </div>
+    
+    <div class="output-container">
+        <pre id="output">Output sẽ xuất hiện ở đây...</pre>
+    </div>
+    
+    <div class="footer-controls">
+        <!-- <div class="pagination-status" id="paginationStatus">
+            Chọn một chức năng để bắt đầu...
+        </div> -->
+    
+        <div class="pagination-controls" id="nextButtonContainer">
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:8000";
+        // Hàm mới để tạo và hiển thị bảng
+        function renderTable(items) {
+            if (!items || items.length === 0) {
+                return "<p>Không có dữ liệu để hiển thị.</p>";
+            }
+
+            let html = '<table class="data-table"><thead><tr>';
+
+            // Lấy tiêu đề cột (dựa trên các key của đối tượng đầu tiên)
+            const headers = Object.keys(items[0]);
+
+            // Tạo hàng tiêu đề
+            headers.forEach(header => {
+                html += `<th>${header.toUpperCase()}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            // Tạo các hàng dữ liệu
+            items.forEach(item => {
+                html += '<tr>';
+                headers.forEach(header => {
+                    // Xử lý dữ liệu (đảm bảo hiển thị giá trị)
+                    let value = item[header];
+                    // Nếu dữ liệu là object, chuyển thành chuỗi
+                    if (typeof value === 'object' && value !== null) {
+                        value = JSON.stringify(value);
+                    }
+                    html += `<td>${value}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            return html;
+        }
+
+        async function fetchDirect() {
+            document.getElementById("output").textContent = "Loading...";
+            const res = await fetch(`${API_BASE}/direct_query`);
+            const data = await res.json();
+            console.log(data);
+            document.getElementById("output").textContent = JSON.stringify(data.slice(0, 100), null, 2) +
+                "\n\n...Total records: " + data.length;
+        }
+
+        // async function fetchPagination() {
+        //     document.getElementById("output").textContent = "Loading...";
+        //     const res = await fetch(`${API_BASE}/pagination?page=1&size=100`);
+        //     const data = await res.json();
+        //     document.getElementById("output").textContent = JSON.stringify(data, null, 2) +
+        //         "\n\nPage 1, 100 records";
+        // }
+        let currentPage = 1;
+
+        async function fetchPagination(page = 1) {
+            currentPage = page; // Cập nhật trang hiện tại
+            const pageSize = 100;
+
+            document.getElementById("output").textContent = `Loading page ${currentPage}...`;
+            document.getElementById("nextButtonContainer").innerHTML = ''; // Xóa các nút cũ
+
+            try {
+                const url = `${API_BASE}/pagination?page=${currentPage}&size=${pageSize}`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                const totalItems = data.total_items;
+
+                // ⭐ LOGIC HIỂN THỊ NÚT NEXT
+                // Tính tổng số trang (làm tròn lên)
+                const totalPages = Math.ceil(totalItems / pageSize);
+
+                // 1. Cập nhật nội dung hiển thị
+                document.getElementById("output").innerHTML =
+                    `Hiển thị trang ${data.page} / ${totalPages} (Tổng bản ghi: ${totalItems})\n\n` +
+                    renderTable(data.results);
+
+                // 2. Kiểm tra nếu còn trang tiếp theo
+                if (currentPage < totalPages) {
+                    // Hiển thị nút NEXT
+                    const nextButton = document.createElement('button');
+                    nextButton.textContent = 'Trang Kế Tiếp (' + (currentPage + 1) + ')';
+                    nextButton.onclick = () => fetchPagination(currentPage + 1);
+                    document.getElementById("nextButtonContainer").appendChild(nextButton);
+                }
+
+                // 3. (Tùy chọn) Hiển thị nút PREVIOUS
+                if (currentPage > 1) {
+                    const prevButton = document.createElement('button');
+                    prevButton.textContent = 'Trang Trước (' + (currentPage - 1) + ')';
+                    prevButton.onclick = () => fetchPagination(currentPage - 1);
+                    document.getElementById("nextButtonContainer").prepend(prevButton); // Đặt trước nút NEXT
+                }
+
+            } catch (error) {
+                document.getElementById("output").textContent = `Lỗi khi tải dữ liệu: ${error.message}`;
+            }
+        }
+                
+        async function processStreamChunkByChunk() {
+                document.getElementById("output").textContent = "Streaming data and processing chunks...";
+
+                try {
+                    // 1. Gửi yêu cầu và nhận Response object
+                    const response = await fetch(`${API_BASE}/stream`);
+
+                    if (!response.body) {
+                        document.getElementById("output").textContent = "Lỗi: Không nhận được body (luồng dữ liệu) từ phản hồi.";
+                        return;
+                    }
+
+                    // 2. Lấy Reader từ body của Response
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder(); // Dùng để chuyển đổi các chunk nhị phân thành chuỗi văn bản
+                    let receivedLength = 0; // Tổng kích thước dữ liệu đã nhận được
+                    let accumulatedData = ""; // Nơi lưu trữ dữ liệu JSONL đã nhận
+
+                    // 3. Đọc dữ liệu theo từng chunk (phần)
+                    while (true) {
+                        // Đọc một chunk mới từ luồng
+                        const { done, value } = await reader.read();
+
+                        // Nếu done là true, luồng đã kết thúc
+                        if (done) {
+                            break;
+                        }
+
+                        // Cập nhật tổng kích thước đã nhận
+                        receivedLength += value.length;
+
+                        // Giải mã chunk nhị phân thành chuỗi
+                        const chunkText = decoder.decode(value, { stream: true });
+
+                        // Gắn vào dữ liệu đã tích lũy
+                        accumulatedData += chunkText;
+
+                        // XỬ LÝ CHUNK TẠI ĐÂY (Ví dụ: Hiển thị tiến trình, xử lý từng dòng JSONL)
+
+                        // Ví dụ: Tìm các dòng JSONL đã hoàn thành
+                        let lastNewlineIndex = accumulatedData.lastIndexOf('\n');
+                        if (lastNewlineIndex !== -1) {
+                            // Tách các dòng JSONL hoàn chỉnh để xử lý
+                            const linesToProcess = accumulatedData.substring(0, lastNewlineIndex);
+                            accumulatedData = accumulatedData.substring(lastNewlineIndex + 1); // Giữ lại phần chưa hoàn chỉnh
+
+                            // --- Xử lý các dòng JSONL hoàn chỉnh ---
+                            linesToProcess.split('\n').forEach(line => {
+                                if (line) {
+                                    try {
+                                        const record = JSON.parse(line);
+                                        // Ví dụ: Log ID của bản ghi để chứng minh việc xử lý stream
+                                        console.log(`Đã xử lý bản ghi ID: ${record.id}`);
+                                    } catch (e) {
+                                        console.error("Lỗi phân tích JSON:", e);
+                                    }
+                                }
+                            });
+                            // ----------------------------------------
+                        }
+
+                        // Cập nhật trạng thái
+                        const receivedMB = (receivedLength / (1024 * 1024)).toFixed(2);
+                        document.getElementById("output").textContent =
+                            `Đang tải xuống và xử lý... Kích thước đã nhận: ${receivedMB} MB.`;
+                        // document.getElementById("output").textContent =
+                        //     `Đang tải xuống và xử lý... Kích thước đã nhận: ${receivedLength} bytes.`;
+                    }
+
+                    // 4. Xử lý phần dữ liệu còn sót lại (nếu có dòng không kết thúc bằng '\n')
+                    if (accumulatedData.trim()) {
+                        console.warn("Dữ liệu cuối cùng không phải JSONL hoàn chỉnh:", accumulatedData);
+                    }
+
+                    document.getElementById("output").textContent =
+                        `Tải xuống và xử lý hoàn tất! Tổng kích thước: ${(receivedLength/(1024 * 1024)).toFixed(2)} MB.`;
+
+                } catch (error) {
+                    document.getElementById("output").textContent = `Lỗi trong quá trình streaming: ${error.message}`;
+                    console.error(error);
+                }
+            }
+        
+        async function processAndDownloadStream() {
+                document.getElementById("output").textContent = "Bắt đầu stream: Vừa xử lý vừa tải xuống...";
+
+                try {
+                    const response = await fetch(`${API_BASE}/stream`);
+                    if (!response.body) {
+                        document.getElementById("output").textContent = "Lỗi: Không nhận được body.";
+                        return;
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+
+                    // ⭐ CÁC BIẾN QUAN TRỌNG ĐỂ XỬ LÝ
+                    const chunksToDownload = []; // Mảng lưu trữ các chunk nhị phân (cho việc tải xuống)
+                    let receivedLength = 0;       // Tổng kích thước (Bytes)
+                    let accumulatedText = "";     // Chuỗi tích lũy (cho việc xử lý JSONL)
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+
+                        if (done) {
+                            break;
+                        }
+
+                        // 1. GHI LẠI DỮ LIỆU GỐC (cho việc TẢI XUỐNG)
+                        chunksToDownload.push(value);
+
+                        // 2. CẬP NHẬT KÍCH THƯỚC VÀ CHUYỂN ĐỔI (cho việc XỬ LÝ)
+                        receivedLength += value.length;
+                        const chunkText = decoder.decode(value, { stream: true });
+                        accumulatedText += chunkText;
+
+                        // 3. XỬ LÝ JSONL THEO TỪNG DÒNG ĐÃ HOÀN CHỈNH
+                        let lastNewlineIndex = accumulatedText.lastIndexOf('\n');
+                        if (lastNewlineIndex !== -1) {
+                            const linesToProcess = accumulatedText.substring(0, lastNewlineIndex);
+                            accumulatedText = accumulatedText.substring(lastNewlineIndex + 1);
+
+                            // --- Vùng xử lý dữ liệu thực tế (Ví dụ: Log ID) ---
+                            linesToProcess.split('\n').forEach(line => {
+                                if (line) {
+                                    try {
+                                        const record = JSON.parse(line);
+                                        // console.log(`Đã xử lý bản ghi ID: ${record.id}`); 
+                                    } catch (e) {
+                                        // Bỏ qua lỗi cú pháp nếu dòng cuối cùng bị cắt
+                                    }
+                                }
+                            });
+                            // ---------------------------------------------------
+                        }
+
+                        // Cập nhật trạng thái
+                        const receivedMB = (receivedLength / (1024 * 1024)).toFixed(2);
+                        document.getElementById("output").textContent =
+                            `Đang stream... Xử lý và đã nhận: ${receivedMB} MB.`;
+                    }
+
+                    // 4. KÍCH HOẠT TẢI XUỐNG (SAU KHI STREAM KẾT THÚC)
+                    if (chunksToDownload.length > 0) {
+                        // Nối tất cả các chunk nhị phân lại thành một Blob duy nhất
+                        const finalBlob = new Blob(chunksToDownload, { type: response.headers.get('Content-Type') || 'application/json' });
+
+                        // Lấy tên file từ header (nếu có)
+                        let fileName = 'streamed_data.jsonl';
+                        const contentDisposition = response.headers.get('Content-Disposition');
+                        if (contentDisposition && contentDisposition.indexOf('filename=') !== -1) {
+                            fileName = contentDisposition.split('filename=')[1].replace(/"/g, '');
+                        }
+
+                        const url = window.URL.createObjectURL(finalBlob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = fileName; // Sử dụng tên file từ Backend
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+
+                        document.getElementById("output").textContent =
+                            `Hoàn tất stream và TẢI XUỐNG file: ${fileName} (${(receivedLength / (1024 * 1024)).toFixed(2)} MB).`;
+                    } else {
+                        document.getElementById("output").textContent = "Hoàn tất stream, nhưng không có dữ liệu để tải xuống.";
+                    }
+
+
+                } catch (error) {
+                    document.getElementById("output").textContent = `Lỗi: ${error.message}`;
+                    console.error(error);
+                }
+            }
+            // Gọi hàm này: processAndDownloadStream();
+    </script>
+</body>
+
+</html>

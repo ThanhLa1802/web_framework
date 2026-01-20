@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_cors import CORS
-from interface.todo_controller import todo_blueprint
-from interface.auth_controller import auth_blueprint
+from controller.todo_controller import todo_blueprint
+from controller.auth_controller import auth_blueprint
 from infrastructure.db import initialize_db
 
 
